@@ -239,10 +239,10 @@ class Builder extends BaseBuilder {
             if ($group)  $pipeline[] = array('$group' => $group);
 
             // Apply order and limit
+            if ($this->projections) $pipeline[] = array('$project' => $this->projections);
             if ($this->orders)      $pipeline[] = array('$sort' => $this->orders);
             if ($this->offset)      $pipeline[] = array('$skip' => $this->offset);
             if ($this->limit)       $pipeline[] = array('$limit' => $this->limit);
-            if ($this->projections) $pipeline[] = array('$project' => $this->projections);
 
             // Execute aggregation
             $results = $this->collection->aggregate($pipeline);
@@ -1051,4 +1051,33 @@ class Builder extends BaseBuilder {
         return parent::__call($method, $parameters);
     }
 
+	/**
+	 * Backup some fields for the pagination count.
+	 *
+	 * @return void
+	 */
+	protected function backupFieldsForCount()
+	{
+		foreach (['orders', 'limit', 'offset', 'columns', 'projections'] as $field)
+		{
+			$this->backups[$field] = $this->{$field};
+
+			$this->{$field} = null;
+		}
+	}
+
+	/**
+	 * Restore some fields after the pagination count.
+	 *
+	 * @return void
+	 */
+	protected function restoreFieldsForCount()
+	{
+		foreach (['orders', 'limit', 'offset', 'columns', 'projections'] as $field)
+		{
+			$this->{$field} = $this->backups[$field];
+		}
+
+		$this->backups = [];
+	}
 }
